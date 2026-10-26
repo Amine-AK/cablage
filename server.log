@@ -1,0 +1,26 @@
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3100
+
+ ✓ Starting...
+ ✓ Ready in 280ms
+=== NOUVELLE DEMANDE / COMMANDE ===
+Destination: 1Gb.resaux@gmail.com
+Détails: {
+  "type": "ORDER",
+  "packId": "pack-5mp-ultrahd",
+  "packTitle": "Pack 4 Caméras 5MP Ultra HD",
+  "clientName": "Test Client",
+  "phone": "+212 6 12 34 56 78",
+  "city": "Rabat",
+  "address": "",
+  "includeInstallation": false,
+  "notes": "",
+  "priceLabel": "1 699 DH",
+  "pageUrl": "https://cablage.ma/packs/pack-5mp-ultrahd"
+}
+=== NOUVELLE DEMANDE / COMMANDE ===
+Destination: 1Gb.resaux@gmail.com
+Détails: {
+  "clientName": "A",
+  "phone": "0612345678"
+}

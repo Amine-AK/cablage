@@ -1,11 +1,5 @@
 import { OfferPackage } from "@/types";
 
-export const MARKETING_HOOK = {
-  ar: "تركيب كمرات مراقبة إبتداء من 1699 درهم فقط تواصل للحصول على استشارة تقنية",
-  fr: "Installation de caméras de surveillance à partir de 1 699 DH seulement. Contactez-nous pour un conseil technique gratuit.",
-  startingPrice: "1 699 DH",
-};
-
 export const OFFERS: OfferPackage[] = [
   {
     id: "pack-2mp-fullhd",
@@ -16,12 +10,11 @@ export const OFFERS: OfferPackage[] = [
     resolution: "2MP Full HD (1080p)",
     cameraCount: 4,
     hasAudio: false,
-    badge: "Offre Promo 1 699 DH",
+    badge: "Offre Promo 1 444 DH",
     popular: false,
     price: {
-      hardwareOnly: 1390,
-      withInstallation: 1699,
-      originalPrice: 2100,
+      hardwareOnly: 1444,
+      withInstallation: 1944,
       currency: "DH",
     },
     mainImage: "/images/offers/2mp/preview.webp",
@@ -102,7 +95,7 @@ export const OFFERS: OfferPackage[] = [
         answer: "L'enregistreur réécrit automatiquement sur les jours les plus anciens. Vous n'avez aucune manipulation à faire.",
       },
       {
-        question: "Dans quelles villes intervenez-vous pour ce pack à 1 699 DH ?",
+        question: "Dans quelles villes intervenez-vous pour ce pack ?",
         answer: "Nous nous déplaçons à Ain Aouda, Rabat, Témara, Salé et régions proches avec intervention rapide sous 24h/48h.",
       },
     ],
@@ -120,9 +113,8 @@ export const OFFERS: OfferPackage[] = [
     badge: "Le Plus Vendu",
     popular: true,
     price: {
-      hardwareOnly: 1990,
-      withInstallation: 2590,
-      originalPrice: 2990,
+      hardwareOnly: 1699,
+      withInstallation: 2199,
       currency: "DH",
     },
     mainImage: "/images/offers/5mp/pack-4-cameras-5mp.webp",
@@ -217,9 +209,8 @@ export const OFFERS: OfferPackage[] = [
     badge: "Audio & Son HD",
     popular: false,
     price: {
-      hardwareOnly: 2390,
-      withInstallation: 2990,
-      originalPrice: 3500,
+      hardwareOnly: 1949,
+      withInstallation: 2449,
       currency: "DH",
     },
     mainImage: "/images/offers/audio-5mp/pack-4-cameras-audio-5mp.webp",
@@ -395,3 +386,12 @@ export const OFFERS: OfferPackage[] = [
     idealFor: "Grandes villas, riads, fermes, ateliers, usines, immeubles, parkings",
   },
 ];
+
+// The 4-camera packs share one installation fee; the hook quotes it.
+const fourCameraPacks = OFFERS.filter((o) => o.cameraCount === 4);
+const lowestHardware = Math.min(...fourCameraPacks.map((o) => o.price.hardwareOnly));
+const installFee = fourCameraPacks[0].price.withInstallation - fourCameraPacks[0].price.hardwareOnly;
+
+export const MARKETING_HOOK = {
+  ar: `كاميرات المراقبة ابتداءً من ${lowestHardware} درهم، والتركيب بـ ${installFee} درهم فقط. تواصل معنا للحصول على استشارة تقنية`,
+};
