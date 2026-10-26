@@ -302,9 +302,8 @@ export const OFFERS: OfferPackage[] = [
     badge: "Pack Pro Grande Superficie",
     popular: false,
     price: {
-      hardwareOnly: 3890,
-      withInstallation: 4890,
-      originalPrice: 5900,
+      hardwareOnly: 3352,
+      withInstallation: 4352,
       currency: "DH",
     },
     mainImage: "/images/offers/8ch-5mp/xvr-8ch.webp",
