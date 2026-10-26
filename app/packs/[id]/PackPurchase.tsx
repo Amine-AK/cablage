@@ -24,7 +24,7 @@ export default function PackPurchase({ offer, pageUrl }: Props) {
       value: true,
       label: "Avec installation",
       price: price.withInstallation,
-      note: "Pose, câblage et configuration sur vos téléphones",
+      note: `Matériel + installation (${formatPrice(price.withInstallation - price.hardwareOnly, price.currency)}) : pose, câblage et configuration`,
     },
     { value: false, label: "Matériel seul", price: price.hardwareOnly, note: "Le kit complet, sans pose" },
   ];
