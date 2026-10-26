@@ -1,144 +1,101 @@
 import React from "react";
-import { Shield, Phone, Mail, MapPin, Heart } from "lucide-react";
-import { DISPLAY_PHONE, CONTACT_EMAIL, OWNER_NAME, BRAND_NAME, generateGeneralInquiryUrl } from "@/lib/whatsapp";
+import Link from "next/link";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import Logo from "./Logo";
+import { OFFERS } from "@/data/offers";
+import { INSTALL_CITIES, NAV_LINKS } from "@/lib/site";
+import {
+  BRAND_NAME,
+  CONTACT_EMAIL,
+  DISPLAY_PHONE,
+  OWNER_NAME,
+  TEL_HREF,
+  generateGeneralInquiryUrl,
+} from "@/lib/whatsapp";
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="bg-slate-950 border-t border-slate-900 text-slate-400 text-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
-          {/* Brand Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-cyan-600 flex items-center justify-center text-white">
-                <Shield className="w-4 h-4" />
-              </div>
-              <span className="font-extrabold text-white text-base">
-                {OWNER_NAME}
-              </span>
-            </div>
-            <p className="text-slate-400 leading-relaxed">
-              {BRAND_NAME}. Vente, installation de caméras de surveillance, tirage de câble, optimisation Wi-Fi et dépannage électronique à domicile.
-            </p>
-            <div className="text-[11px] text-emerald-400 font-semibold">
-              ● Déplacement rapide : Ain Aouda • Rabat • Témara • Salé
-            </div>
-          </div>
-
-          {/* Nos Offres */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">
-              Nos Packs Caméras
-            </h4>
-            <ul className="space-y-2 text-slate-400">
-              <li>
-                <a href="#offres" className="hover:text-cyan-400 transition">
-                  Pack 4 Caméras 2MP Full HD
-                </a>
-              </li>
-              <li>
-                <a href="#offres" className="hover:text-cyan-400 transition">
-                  Pack 4 Caméras 5MP Ultra HD
-                </a>
-              </li>
-              <li>
-                <a href="#offres" className="hover:text-cyan-400 transition">
-                  Pack 4 Caméras 5MP Audio Micro
-                </a>
-              </li>
-              <li>
-                <a href="#offres" className="hover:text-cyan-400 transition">
-                  Pack Pro 8 Caméras 5MP (8CH)
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Services à Domicile */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">
-              Services à Domicile
-            </h4>
-            <ul className="space-y-2 text-slate-400">
-              <li>
-                <a href="#services" className="hover:text-cyan-400 transition">
-                  Installation Caméras CCTV & IP
-                </a>
-              </li>
-              <li>
-                <a href="#services" className="hover:text-cyan-400 transition">
-                  Extension & Partage Réseau Wi-Fi Mesh
-                </a>
-              </li>
-              <li>
-                <a href="#services" className="hover:text-cyan-400 transition">
-                  Câblage Informatique RJ45 Cat6
-                </a>
-              </li>
-              <li>
-                <a href="#services" className="hover:text-cyan-400 transition">
-                  Réparation Électronique & Alimentations
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Direct */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-white text-sm uppercase tracking-wider">
-              Contact Direct
-            </h4>
-            <ul className="space-y-2.5">
-              <li>
-                <a
-                  href={`tel:${DISPLAY_PHONE.replace(/\s+/g, "")}`}
-                  className="flex items-center gap-2 hover:text-white transition"
-                >
-                  <Phone className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{DISPLAY_PHONE}</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={generateGeneralInquiryUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-white transition text-emerald-400"
-                >
-                  <Shield className="w-3.5 h-3.5" />
-                  <span>WhatsApp : {DISPLAY_PHONE}</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="flex items-center gap-2 hover:text-white transition break-all"
-                >
-                  <Mail className="w-3.5 h-3.5 text-blue-400" />
-                  <span>{CONTACT_EMAIL}</span>
-                </a>
-              </li>
-              <li className="flex items-center gap-2 text-slate-400">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                <span>Ain Aouda / Rabat / Témara / Salé</span>
-              </li>
-            </ul>
-          </div>
-
+    <footer className="mt-auto bg-slate-900 text-sm text-slate-300">
+      <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-3">
+          <Logo inverted />
+          <p className="leading-relaxed text-slate-400">
+            Vente et installation de caméras de surveillance, câblage réseau, Wi-Fi et dépannage électronique à domicile.
+          </p>
+          <p className="text-slate-400">
+            Paiement après installation pour les packs installés à domicile.
+          </p>
         </div>
 
-        {/* Bottom copyright */}
-        <div className="mt-12 pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500">
-          <div>
-            &copy; {currentYear} {OWNER_NAME} — {BRAND_NAME}. Tous droits réservés.
-          </div>
-          <div className="flex items-center gap-1 text-slate-500 text-xs">
-            <span>Service professionnel de proximité au Maroc</span>
-          </div>
+        <div>
+          <h2 className="text-sm font-semibold text-white">Packs caméras</h2>
+          <ul className="mt-3 space-y-2">
+            {OFFERS.map((offer) => (
+              <li key={offer.id}>
+                <Link href={`/packs/${offer.id}`} className="hover:text-white hover:underline">
+                  {offer.title}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link href="/packs" className="font-medium text-white hover:underline">
+                Tous les packs
+              </Link>
+            </li>
+          </ul>
         </div>
+
+        <div>
+          <h2 className="text-sm font-semibold text-white">Informations</h2>
+          <ul className="mt-3 space-y-2">
+            {NAV_LINKS.filter((l) => l.href !== "/packs").map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="hover:text-white hover:underline">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-sm font-semibold text-white">Contact</h2>
+          <ul className="mt-3 space-y-2.5">
+            <li>
+              <a href={TEL_HREF} className="inline-flex items-center gap-2 hover:text-white">
+                <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {DISPLAY_PHONE}
+              </a>
+            </li>
+            <li>
+              <a
+                href={generateGeneralInquiryUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 hover:text-white"
+              >
+                <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                WhatsApp
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-2 break-all hover:text-white">
+                <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {CONTACT_EMAIL}
+              </a>
+            </li>
+            <li className="flex items-start gap-2 text-slate-400">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              {INSTALL_CITIES.join(" · ")}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="border-t border-slate-800">
+        <p className="container-page py-5 text-xs text-slate-400">
+          © {new Date().getFullYear()} {OWNER_NAME} — {BRAND_NAME}. Tous droits réservés.
+        </p>
       </div>
     </footer>
   );

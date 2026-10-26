@@ -1,258 +1,300 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
+import { CheckCircle2, MessageCircle, X } from "lucide-react";
 import { OfferPackage } from "@/types";
-import { generateWhatsAppOrderUrl } from "@/lib/whatsapp";
-import { X, CheckCircle2, ShieldCheck, Phone, MapPin, User, MessageSquare, Send } from "lucide-react";
+import { formatPrice } from "@/lib/format";
+import { FORM_CITIES, absoluteUrl } from "@/lib/site";
+import { isBlank, isValidMoroccanPhone } from "@/lib/validation";
+import { OWNER_NAME, generateWhatsAppOrderUrl } from "@/lib/whatsapp";
 
 interface OrderModalProps {
   pack: OfferPackage | null;
   isOpen: boolean;
   onClose: () => void;
+  initialInstall?: boolean;
 }
 
-export default function OrderModal({ pack, isOpen, onClose }: OrderModalProps) {
-  const [includeInstallation, setIncludeInstallation] = useState(true);
+type Errors = Partial<Record<"name" | "phone", string>>;
+
+export default function OrderModal({ pack, isOpen, onClose, initialInstall = true }: OrderModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const uid = useId();
+
+  const [includeInstallation, setIncludeInstallation] = useState(initialInstall);
   const [clientName, setClientName] = useState("");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("Ain Aouda");
+  const [city, setCity] = useState<string>(FORM_CITIES[0]);
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sentUrl, setSentUrl] = useState<string | null>(null);
 
-  if (!isOpen || !pack) return null;
-
-  const currentPrice = includeInstallation
-    ? pack.price.withInstallation
-    : pack.price.hardwareOnly;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!clientName || !phone) {
-      alert("Veuillez renseigner votre nom et votre numéro de téléphone.");
-      return;
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) {
+      setIncludeInstallation(initialInstall);
+      setErrors({});
+      setSentUrl(null);
+      dialog.showModal();
+      document.body.style.overflow = "hidden";
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
     }
+  }, [isOpen, initialInstall]);
 
-    setIsSubmitting(true);
-
-    const orderData = {
-      packId: pack.id,
-      packTitle: pack.title,
-      clientName,
-      phone,
-      city,
-      address,
-      includeInstallation,
-      notes,
-    };
-
-    // Optionally notify API in background (fire-and-forget)
-    try {
-      fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "ORDER",
-          ...orderData,
-        }),
-      }).catch(() => {});
-    } catch {
-      // Ignore background error
-    }
-
-    // Generate WhatsApp link and open
-    const waUrl = generateWhatsAppOrderUrl(orderData);
-    window.open(waUrl, "_blank", "noopener,noreferrer");
-
-    setIsSubmitting(false);
+  // Fired for Escape, the close button and programmatic close alike.
+  const handleDialogClose = () => {
+    document.body.style.overflow = "";
     onClose();
   };
 
+  if (!pack) return <dialog ref={dialogRef} onClose={handleDialogClose} />;
+
+  const currentPrice = includeInstallation ? pack.price.withInstallation : pack.price.hardwareOnly;
+  const priceLabel = formatPrice(currentPrice, pack.price.currency);
+
+  const validate = (): Errors => {
+    const next: Errors = {};
+    if (isBlank(clientName)) next.name = "Indiquez votre nom.";
+    if (isBlank(phone)) next.phone = "Indiquez votre numéro de téléphone.";
+    else if (!isValidMoroccanPhone(phone)) next.phone = "Numéro non reconnu. Exemple : 06 12 34 56 78 ou +212 6 12 34 56 78.";
+    return next;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const found = validate();
+    setErrors(found);
+    if (found.name) return nameRef.current?.focus();
+    if (found.phone) return phoneRef.current?.focus();
+
+    setIsSubmitting(true);
+    const orderData = {
+      packId: pack.id,
+      packTitle: pack.title,
+      clientName: clientName.trim(),
+      phone: phone.trim(),
+      city,
+      address: address.trim(),
+      includeInstallation,
+      notes: notes.trim(),
+      priceLabel,
+      pageUrl: absoluteUrl(`/packs/${pack.id}`),
+    };
+
+    const waUrl = generateWhatsAppOrderUrl(orderData);
+    // Must run synchronously in the click handler or popup blockers interfere.
+    const win = window.open(waUrl, "_blank");
+    if (win) win.opener = null;
+
+    fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "ORDER", ...orderData }),
+      keepalive: true,
+    }).catch(() => {});
+
+    setSentUrl(waUrl);
+    setIsSubmitting(false);
+  };
+
+  const titleId = `${uid}-title`;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div
-        className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="relative bg-gradient-to-r from-blue-900 via-slate-900 to-slate-900 p-6 border-b border-slate-800">
-          <button
-            onClick={onClose}
-            aria-label="Fermer"
-            className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 mb-2">
-            Commande & Devis Express
-          </span>
-          <h3 className="text-xl font-bold text-white">{pack.title}</h3>
-          <p className="text-sm text-slate-400 mt-1">{pack.tagline}</p>
+    <dialog
+      ref={dialogRef}
+      onClose={handleDialogClose}
+      onClick={(e) => {
+        if (e.target === dialogRef.current) dialogRef.current?.close();
+      }}
+      aria-labelledby={titleId}
+      className="m-auto w-[calc(100%-1.5rem)] max-w-lg rounded-xl bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-900/60"
+    >
+      <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
+        <div>
+          <p className="eyebrow">{sentUrl ? "Dernière étape" : "Commander"}</p>
+          <h2 id={titleId} className="mt-1 text-lg font-bold">
+            {pack.title}
+          </h2>
         </div>
+        <button
+          type="button"
+          onClick={() => dialogRef.current?.close()}
+          className="btn-icon -mr-2 -mt-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        >
+          <X className="h-5 w-5" aria-hidden="true" />
+          <span className="sr-only">Fermer</span>
+        </button>
+      </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Price & Installation Option */}
-          <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Choisissez votre formule :
-            </div>
-
+      {sentUrl ? (
+        <div className="space-y-4 p-5" role="status">
+          <div className="flex gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+            <p>
+              Votre commande est pré-remplie dans WhatsApp. <strong>Appuyez sur « Envoyer » dans WhatsApp</strong> pour la
+              transmettre. {OWNER_NAME} vous recontactera pour la confirmer.
+            </p>
+          </div>
+          <p className="text-sm text-slate-600">WhatsApp ne s&apos;est pas ouvert ?</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <a href={sentUrl} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp flex-1">
+              <MessageCircle className="h-4 w-4" aria-hidden="true" />
+              Ouvrir WhatsApp
+            </a>
+            <button type="button" className="btn btn-secondary flex-1" onClick={() => dialogRef.current?.close()}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate className="space-y-5 p-5">
+          <fieldset>
+            <legend className="label">Formule</legend>
             <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setIncludeInstallation(true)}
-                className={`p-3 rounded-lg border text-left transition flex flex-col justify-between ${
-                  includeInstallation
-                    ? "border-cyan-500 bg-cyan-950/40 ring-1 ring-cyan-500 text-white"
-                    : "border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600"
-                }`}
-              >
-                <div>
-                  <div className="text-xs font-bold flex items-center gap-1 text-cyan-400">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Recommandé
-                  </div>
-                  <div className="text-xs font-medium mt-1">Avec Pose à domicile</div>
-                </div>
-                <div className="text-base font-extrabold mt-2 text-white">
-                  {pack.price.withInstallation} {pack.price.currency}
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIncludeInstallation(false)}
-                className={`p-3 rounded-lg border text-left transition flex flex-col justify-between ${
-                  !includeInstallation
-                    ? "border-cyan-500 bg-cyan-950/40 ring-1 ring-cyan-500 text-white"
-                    : "border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-600"
-                }`}
-              >
-                <div>
-                  <div className="text-xs font-semibold text-slate-400">Matériel Seul</div>
-                  <div className="text-xs text-slate-400 mt-1">Sans installation</div>
-                </div>
-                <div className="text-base font-extrabold mt-2 text-slate-200">
-                  {pack.price.hardwareOnly} {pack.price.currency}
-                </div>
-              </button>
+              {[
+                { value: true, label: "Avec installation", price: pack.price.withInstallation },
+                { value: false, label: "Matériel seul", price: pack.price.hardwareOnly },
+              ].map((opt) => (
+                <label
+                  key={opt.label}
+                  className={`flex cursor-pointer flex-col rounded-lg border p-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-600 ${
+                    includeInstallation === opt.value
+                      ? "border-brand-700 bg-brand-50"
+                      : "border-slate-300 hover:border-slate-400"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`${uid}-formule`}
+                    className="sr-only"
+                    checked={includeInstallation === opt.value}
+                    onChange={() => setIncludeInstallation(opt.value)}
+                  />
+                  <span className="font-medium text-slate-800">{opt.label}</span>
+                  <span className="mt-1 font-bold">{formatPrice(opt.price, pack.price.currency)}</span>
+                </label>
+              ))}
             </div>
+          </fieldset>
 
-            <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
-              <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>
-                {includeInstallation
-                  ? "Installation propre, câblage sécurisé et configuration mobile incluses"
-                  : "Matériel neuf garanti avec assistance téléphonique pour la mise en route"}
-              </span>
-            </div>
+          <div>
+            <label htmlFor={`${uid}-name`} className="label">
+              Nom complet <span aria-hidden="true">*</span>
+            </label>
+            <input
+              ref={nameRef}
+              id={`${uid}-name`}
+              type="text"
+              autoComplete="name"
+              required
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? `${uid}-name-err` : undefined}
+              className="input"
+            />
+            {errors.name && (
+              <p id={`${uid}-name-err`} className="field-error">
+                {errors.name}
+              </p>
+            )}
           </div>
 
-          {/* Customer Inputs */}
-          <div className="space-y-3.5">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Nom complet *
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Mohamed Amrani"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  className="w-full bg-slate-800/90 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Numéro WhatsApp / Tél *
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="tel"
-                    required
-                    placeholder="06 XX XX XX XX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-slate-800/90 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Ville d'intervention *
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-slate-800/90 border border-slate-700 rounded-lg pl-10 pr-8 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent appearance-none"
-                  >
-                    <option value="Ain Aouda">Ain Aouda</option>
-                    <option value="Rabat">Rabat</option>
-                    <option value="Témara">Témara</option>
-                    <option value="Salé">Salé</option>
-                    <option value="Autre région">Autre région</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Quartier / Adresse (facultatif)
+              <label htmlFor={`${uid}-phone`} className="label">
+                Téléphone / WhatsApp <span aria-hidden="true">*</span>
               </label>
               <input
-                type="text"
-                placeholder="Ex: Harhoura, Agdal, Hay Riad, Bettana..."
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full bg-slate-800/90 border border-slate-700 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                ref={phoneRef}
+                id={`${uid}-phone`}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                required
+                placeholder="06 12 34 56 78"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? `${uid}-phone-err` : undefined}
+                className="input"
               />
+              {errors.phone && (
+                <p id={`${uid}-phone-err`} className="field-error">
+                  {errors.phone}
+                </p>
+              )}
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Remarques particulières (facultatif)
+              <label htmlFor={`${uid}-city`} className="label">
+                Ville <span aria-hidden="true">*</span>
               </label>
-              <div className="relative">
-                <MessageSquare className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <textarea
-                  rows={2}
-                  placeholder="Ex: Maison à étage, besoin aussi d'étendre le wifi, disponible samedi matin..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-slate-800/90 border border-slate-700 rounded-lg pl-10 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
-                />
-              </div>
+              <select id={`${uid}-city`} value={city} onChange={(e) => setCity(e.target.value)} className="input">
+                {FORM_CITIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-900/40 transition-all transform hover:-translate-y-0.5"
-            >
-              <Send className="w-5 h-5" />
-              <span>Commander via WhatsApp ({currentPrice} {pack.price.currency})</span>
+          <div>
+            <label htmlFor={`${uid}-address`} className="label">
+              Quartier / adresse <span className="font-normal text-slate-500">(facultatif)</span>
+            </label>
+            <input
+              id={`${uid}-address`}
+              type="text"
+              autoComplete="street-address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="input"
+            />
+          </div>
+
+          <div>
+            <label htmlFor={`${uid}-notes`} className="label">
+              Remarques <span className="font-normal text-slate-500">(facultatif)</span>
+            </label>
+            <textarea
+              id={`${uid}-notes`}
+              rows={2}
+              placeholder="Ex : maison à étage, disponible samedi matin…"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="input resize-y"
+            />
+          </div>
+
+          <div className="rounded-lg bg-slate-50 p-4 text-sm">
+            <p className="font-medium text-slate-800">Récapitulatif</p>
+            <p className="mt-1 text-slate-600">
+              {pack.title} — {includeInstallation ? "avec installation" : "matériel seul"}
+            </p>
+            <p className="mt-1 text-lg font-bold">{priceLabel}</p>
+          </div>
+
+          <div>
+            <button type="submit" disabled={isSubmitting} className="btn btn-whatsapp w-full text-base">
+              <MessageCircle className="h-5 w-5" aria-hidden="true" />
+              Envoyer la commande sur WhatsApp
             </button>
-            <p className="text-center text-xs text-slate-400 mt-2">
-              Un message prérempli s'ouvrira sur WhatsApp pour confirmation immédiate avec <strong>Amine Ait Yahya</strong>.
+            <p className="mt-2 text-center text-xs text-slate-500">
+              Un message pré-rempli s&apos;ouvre dans WhatsApp. Rien n&apos;est envoyé tant que vous n&apos;appuyez pas sur
+              « Envoyer ».
             </p>
           </div>
         </form>
-      </div>
-    </div>
+      )}
+    </dialog>
   );
 }

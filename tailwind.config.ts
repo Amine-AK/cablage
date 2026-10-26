@@ -2,13 +2,13 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
+        // Existing brand blue, kept as the single accent colour.
         brand: {
           50: "#f0f7ff",
           100: "#e0effe",
@@ -22,21 +22,28 @@ const config: Config = {
           900: "#0c406e",
           950: "#08294a",
         },
-        whatsapp: "#25D366",
-        "whatsapp-dark": "#128C7E",
+        // WhatsApp actions only. Darker than the official #25D366 so white
+        // text keeps an AA contrast ratio.
+        whatsapp: {
+          DEFAULT: "#047857",
+          dark: "#065f46",
+        },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: [
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif",
+        ],
+        arabic: ["Noto Sans Arabic", "Segoe UI", "Tahoma", "sans-serif"],
       },
-      animation: {
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "bounce-subtle": "bounceSubtle 2s infinite",
-      },
-      keyframes: {
-        bounceSubtle: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
-        },
+      maxWidth: {
+        page: "72rem",
       },
     },
   },

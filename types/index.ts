@@ -61,4 +61,6 @@ export interface OrderData {
   address?: string;
   includeInstallation: boolean;
   notes?: string;
+  priceLabel?: string;
+  pageUrl?: string;
 }

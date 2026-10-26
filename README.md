@@ -37,6 +37,19 @@ npm run dev
 
 Ouvrez ensuite [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
+## ⚙️ Configuration & vérifications
+
+- **Catalogue :** `data/offers.ts` (packs, prix, images) — source unique utilisée par toutes les pages.
+- **Contact / WhatsApp :** `lib/whatsapp.ts`.
+- **Villes, bandeau d'annonce, navigation :** `lib/site.ts` (`ANNOUNCEMENT.enabled = false` pour masquer le bandeau).
+- **URL du site :** variable `NEXT_PUBLIC_SITE_URL` (défaut `https://cablage.ma`), utilisée pour les URL canoniques, le sitemap et les données structurées.
+
+```bash
+npx tsc --noEmit   # typage
+npm run lint       # ESLint (next/core-web-vitals)
+npm run build      # build de production
+```
+
 ---
 
 ## ☁️ Déploiement sur Vercel (1 Clic)
